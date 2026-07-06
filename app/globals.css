@@ -1,8 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f0f7fa;
+  --foreground: #0b2a47;
+  --ocean-dark: #0b2a47;
+  --ocean-medium: #1a5276;
+  --ocean-light: #3498db;
+  --teal: #20b2aa;
+  --sand: #f4d4b8;
+  --coral: #ff6b6b;
 }
 
 @theme inline {
@@ -12,15 +18,154 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+body {
+  background: linear-gradient(135deg, #f0f7fa 0%, #e0f2f7 100%);
+  color: var(--foreground);
+  font-family: 'Georgia', 'Times New Roman', serif;
+  line-height: 1.6;
+}
+
+.poster-container {
+  background: white;
+  box-shadow: 0 10px 40px rgba(11, 42, 71, 0.2);
+  border: 3px solid var(--ocean-dark);
+  position: relative;
+  overflow: hidden;
+}
+
+.poster-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: linear-gradient(90deg, var(--ocean-dark), var(--teal), var(--ocean-light));
+  z-index: 1;
+}
+
+.header-section {
+  background: linear-gradient(135deg, var(--ocean-dark) 0%, var(--ocean-medium) 100%);
+  color: white;
+  padding: 2rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.header-section::after {
+  content: '🌊';
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  font-size: 3rem;
+  opacity: 0.3;
+}
+
+.header-section::before {
+  content: '🌊';
+  position: absolute;
+  bottom: 10px;
+  left: 20px;
+  font-size: 3rem;
+  opacity: 0.3;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin: 0.5rem 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.authors {
+  font-size: 1.1rem;
+  margin-top: 0.5rem;
+  opacity: 0.95;
+}
+
+.affiliation {
+  font-size: 0.95rem;
+  margin-top: 0.25rem;
+  opacity: 0.85;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  padding: 2rem;
+}
+
+@media (max-width: 1024px) {
+  .content-grid {
+    grid-template-columns: 1fr;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.section {
+  border-left: 4px solid var(--teal);
+  padding-left: 1.5rem;
+}
+
+.section-title {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: var(--ocean-dark);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-content {
+  font-size: 0.95rem;
+  color: #333;
+  line-height: 1.7;
+}
+
+.highlight-box {
+  background: linear-gradient(135deg, rgba(32, 178, 170, 0.1), rgba(52, 152, 219, 0.1));
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  border-left: 4px solid var(--teal);
+}
+
+.data-point {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.stat-number {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: var(--ocean-light);
+}
+
+.footer-section {
+  background: var(--sand);
+  padding: 1.5rem;
+  border-top: 2px dashed var(--ocean-light);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .footer-section {
+    grid-template-columns: 1fr;
+  }
+  
+  .title {
+    font-size: 1.8rem;
+  }
+  
+  .content-grid {
+    gap: 1rem;
+    padding: 1rem;
+  }
 }
