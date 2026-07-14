@@ -1,31 +1,23 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useMemo, useState } from "react";
 
 const DATASET_ONE_ANNOTATIONS = 7030;
 const DATASET_TWO_ANNOTATIONS = 1157;
-
 const DATASET_ONE_FRAMES = 363;
 const DATASET_TWO_FRAMES = 384;
-
-const TOTAL_ANNOTATIONS =
-  DATASET_ONE_ANNOTATIONS + DATASET_TWO_ANNOTATIONS;
-
-const ANNOTATIONS_PER_FISH = 1;
-const MIN_PERCENTAGE = 1;
-const MAX_PERCENTAGE = 100;
-const ANNOTATIONS_PER_PERCENT = TOTAL_ANNOTATIONS / 100;
+const TOTAL_ANNOTATIONS = DATASET_ONE_ANNOTATIONS + DATASET_TWO_ANNOTATIONS;
+const TOTAL_FRAMES = DATASET_ONE_FRAMES + DATASET_TWO_FRAMES;
+const ANNOTATIONS_PER_FISH = 25;
 
 type SchoolFish = {
+  id: number;
   x: number;
   y: number;
+  size: number;
   rotation: number;
   opacity: number;
+  delay: number;
 };
 
 function seededValue(seed: number): number {
@@ -38,98 +30,142 @@ function formatNumber(value: number): string {
 }
 
 export default function AnnotationStory() {
-  const [annotationPercentage, setAnnotationPercentage] =
-    useState(100);
+  const [annotationPercentage, setAnnotationPercentage] = useState(1);
 
+  const totalFishSymbols = Math.ceil(TOTAL_ANNOTATIONS / ANNOTATIONS_PER_FISH);
   const visibleAnnotations = Math.round(
-    (TOTAL_ANNOTATIONS * annotationPercentage) / 100
+    TOTAL_ANNOTATIONS * (annotationPercentage / 100)
   );
+  const visibleFishSymbols = Math.max(
+    1,
+    Math.ceil(visibleAnnotations / ANNOTATIONS_PER_FISH)
+  );
+  const annotationsPerPercentage = TOTAL_ANNOTATIONS / 100;
+  const annotationsPerFrame = TOTAL_ANNOTATIONS / TOTAL_FRAMES;
+
+  const school = useMemo<SchoolFish[]>(() => {
+    return Array.from({ length: totalFishSymbols }, (_, index) => {
+      const horizontalSeed = seededValue(index * 17 + 1);
+      const verticalSeed = seededValue(index * 23 + 2);
+      const centreBias = Math.sin(horizontalSeed * Math.PI);
+
+      return {
+        id: index,
+        x: 4 + horizontalSeed * 92,
+        y: 8 + verticalSeed * 84,
+        size: 7 + seededValue(index * 31 + 3) * 5,
+        rotation: -18 + seededValue(index * 41 + 4) * 36,
+        opacity: 0.48 + centreBias * 0.46,
+        delay: seededValue(index * 53 + 5) * 220,
+      };
+    });
+  }, [totalFishSymbols]);
 
   return (
     <section className="mt-6 overflow-hidden rounded-[2rem] border border-neutral-800 bg-neutral-950">
       <div className="border-b border-neutral-800 px-5 py-5 md:px-7">
         <p className="text-xs uppercase tracking-[0.3em] text-neutral-600">
-          Behind the Data
+          Learning the bay
         </p>
 
         <h2 className="mt-2 text-2xl font-medium tracking-tight text-white md:text-3xl">
-          Building the training dataset
+          Building the training school
         </h2>
 
         <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-500">
-          Every small blue dot below represents one manually created annotation.
-          Use the slider to reveal between 1% and 100% of all 8,187
-          annotations.
+          Move through the annotation process and watch the training school grow.
         </p>
       </div>
 
       <div className="p-5 md:p-7">
         <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-black">
-          <div className="flex items-end justify-between gap-4 border-b border-neutral-900 px-5 py-4">
+          <div className="flex flex-col gap-4 border-b border-neutral-900 px-5 py-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.25em] text-neutral-600">
-                Annotation school
+                Manual annotation progress
               </p>
 
-              <p className="mt-1 text-3xl font-medium tracking-tight text-white">
-                {formatNumber(visibleAnnotations)}
-                <span className="ml-2 text-base font-normal text-neutral-600">
+              <div className="mt-2 flex items-end gap-3">
+                <p className="text-4xl font-medium tracking-tighter text-white md:text-5xl">
+                  {formatNumber(visibleAnnotations)}
+                </p>
+
+                <p className="pb-1 text-sm text-neutral-500">
                   of {formatNumber(TOTAL_ANNOTATIONS)}
-                </span>
-              </p>
-            </div>
-
-            <p className="text-right text-xs leading-5 text-neutral-600">
-              One fish symbol
-              <br />
-              = {ANNOTATIONS_PER_FISH} annotation
-            </p>
-          </div>
-
-          <FishCanvas visibleAnnotations={visibleAnnotations} />
-
-          <div className="border-t border-neutral-900 px-5 py-5">
-            <div className="flex items-end justify-between gap-4">
-              <div>
-                <label
-                  htmlFor="annotation-percentage"
-                  className="text-xs uppercase tracking-[0.25em] text-neutral-600"
-                >
-                  Manual annotation shown
-                </label>
-
-                <p className="mt-1 text-2xl font-medium text-white">
-                  {annotationPercentage}%
                 </p>
               </div>
-
-              <p className="max-w-xs text-right text-xs leading-5 text-neutral-600">
-                Each 1% adds about{" "}
-                {ANNOTATIONS_PER_PERCENT.toFixed(2)} fish, rounded to
-                the nearest whole annotation.
-              </p>
             </div>
 
-            <input
-              id="annotation-percentage"
-              type="range"
-              min={MIN_PERCENTAGE}
-              max={MAX_PERCENTAGE}
-              step={1}
-              value={annotationPercentage}
-              onChange={(event) =>
-                setAnnotationPercentage(Number(event.target.value))
-              }
-              aria-valuetext={`${annotationPercentage}%: ${formatNumber(
-                visibleAnnotations
-              )} annotations`}
-              className="mt-5 h-2 w-full cursor-pointer touch-pan-x accent-sky-300"
-            />
+            <div className="text-left sm:text-right">
+              <p className="text-2xl font-medium tracking-tight text-white">
+                {annotationPercentage}%
+              </p>
 
-            <div className="mt-2 flex justify-between text-xs text-neutral-700">
-              <span>1%</span>
-              <span>50%</span>
-              <span>100%</span>
+              <p className="mt-1 text-xs text-neutral-600">
+                ≈ {annotationsPerPercentage.toFixed(1)} annotations per percentage point
+              </p>
+            </div>
+          </div>
+
+          <div className="relative h-64 overflow-hidden md:h-72">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(14,116,144,0.24),transparent_68%)]" />
+            <div className="absolute inset-x-0 top-1/3 h-px bg-white/[0.025]" />
+            <div className="absolute inset-x-0 top-2/3 h-px bg-white/[0.025]" />
+
+            {school.slice(0, visibleFishSymbols).map((fish) => (
+              <FishMark
+                key={fish.id}
+                x={fish.x}
+                y={fish.y}
+                size={fish.size}
+                rotation={fish.rotation}
+                opacity={fish.opacity}
+                delay={fish.delay}
+              />
+            ))}
+
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black via-black/60 to-transparent" />
+
+            <div className="pointer-events-none absolute bottom-4 left-5">
+              <p className="text-xs text-neutral-600">
+                1 fish symbol ≈ {ANNOTATIONS_PER_FISH} annotations
+              </p>
+            </div>
+          </div>
+
+          <div className="border-t border-neutral-900 px-5 py-5">
+            <div className="mb-3 flex items-center justify-between">
+              <span className="text-xs text-neutral-600">1%</span>
+              <span className="text-sm font-medium text-white">{annotationPercentage}%</span>
+              <span className="text-xs text-neutral-600">100%</span>
+            </div>
+
+            <div className="relative">
+              <div className="pointer-events-none absolute left-0 top-1/2 h-1 w-full -translate-y-1/2 overflow-hidden rounded-full bg-neutral-800">
+                <div
+                  className="h-full rounded-full bg-white transition-[width] duration-200"
+                  style={{ width: `${annotationPercentage}%` }}
+                />
+              </div>
+
+              <input
+                type="range"
+                min={1}
+                max={100}
+                step={1}
+                value={annotationPercentage}
+                onChange={(event) =>
+                  setAnnotationPercentage(Number(event.target.value))
+                }
+                aria-label="Manual annotation percentage"
+                className="relative z-10 block h-4 w-full cursor-pointer appearance-none bg-transparent accent-white"
+              />
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <DataCard label="Annotations shown" value={formatNumber(visibleAnnotations)} />
+              <DataCard label="Fish symbols" value={formatNumber(visibleFishSymbols)} />
+              <DataCard label="Annotations per frame" value={annotationsPerFrame.toFixed(1)} />
             </div>
           </div>
 
@@ -153,208 +189,50 @@ export default function AnnotationStory() {
   );
 }
 
-function FishCanvas({
-  visibleAnnotations,
+function FishMark({
+  x,
+  y,
+  size,
+  rotation,
+  opacity,
+  delay,
 }: {
-  visibleAnnotations: number;
+  x: number;
+  y: number;
+  size: number;
+  rotation: number;
+  opacity: number;
+  delay: number;
 }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const frameRef = useRef<number | null>(null);
-  const sizeRef = useRef({ width: 0, height: 0 });
-
-  /*
-   * A jittered grid prevents thousands of fish from landing directly
-   * on top of one another. Every item still represents one annotation.
-   */
-  const school = useMemo<SchoolFish[]>(() => {
-    const targetAspectRatio = 1.45;
-    const columns = Math.ceil(
-      Math.sqrt(TOTAL_ANNOTATIONS * targetAspectRatio)
-    );
-    const rows = Math.ceil(TOTAL_ANNOTATIONS / columns);
-
-    return Array.from(
-      { length: TOTAL_ANNOTATIONS },
-      (_, index) => {
-        const column = index % columns;
-        const row = Math.floor(index / columns);
-
-        const jitterX =
-          (seededValue(index * 17 + 1) - 0.5) * 0.56;
-        const jitterY =
-          (seededValue(index * 23 + 2) - 0.5) * 0.56;
-
-        return {
-          x: (column + 0.5 + jitterX) / columns,
-          y: (row + 0.5 + jitterY) / rows,
-          rotation:
-            -0.32 + seededValue(index * 41 + 4) * 0.64,
-          opacity:
-            0.5 + seededValue(index * 53 + 5) * 0.42,
-        };
-      }
-    );
-  }, []);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    const canvas = canvasRef.current;
-
-    if (!container || !canvas) return;
-
-    function resizeCanvas() {
-      const width = container.clientWidth;
-      const height = container.clientHeight;
-
-      /*
-       * Capping DPR avoids creating an unnecessarily huge canvas on
-       * high-density phones while remaining sharp.
-       */
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-
-      sizeRef.current = { width, height };
-
-      canvas.width = Math.max(1, Math.round(width * dpr));
-      canvas.height = Math.max(1, Math.round(height * dpr));
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
-
-      const context = canvas.getContext("2d");
-      context?.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-
-    resizeCanvas();
-
-    const observer = new ResizeObserver(resizeCanvas);
-    observer.observe(container);
-
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    if (frameRef.current !== null) {
-      cancelAnimationFrame(frameRef.current);
-    }
-
-    frameRef.current = requestAnimationFrame(() => {
-      const context = canvas.getContext("2d");
-      const { width, height } = sizeRef.current;
-
-      if (!context || width === 0 || height === 0) return;
-
-      context.clearRect(0, 0, width, height);
-
-      const gradient = context.createRadialGradient(
-        width / 2,
-        height / 2,
-        0,
-        width / 2,
-        height / 2,
-        Math.max(width, height) * 0.65
-      );
-
-      gradient.addColorStop(0, "rgba(28, 79, 110, 0.20)");
-      gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
-
-      context.fillStyle = gradient;
-      context.fillRect(0, 0, width, height);
-
-      context.fillStyle = "rgba(255, 255, 255, 0.03)";
-      context.fillRect(0, Math.round(height / 2), width, 1);
-
-      /*
-       * The grid determines the maximum fish size, ensuring each fish
-       * retains a visible mark even when all 8,187 are drawn.
-       */
-      const targetAspectRatio = 1.45;
-      const columns = Math.ceil(
-        Math.sqrt(TOTAL_ANNOTATIONS * targetAspectRatio)
-      );
-      const rows = Math.ceil(TOTAL_ANNOTATIONS / columns);
-      const cellWidth = width / columns;
-      const cellHeight = height / rows;
-
-      const fishWidth = Math.max(
-        1.5,
-        Math.min(4.2, cellWidth * 0.76)
-      );
-      const fishHeight = Math.max(
-        0.9,
-        Math.min(2.2, cellHeight * 0.5)
-      );
-
-      for (let index = 0; index < visibleAnnotations; index += 1) {
-        const fish = school[index];
-        const x = fish.x * width;
-        const y = fish.y * height;
-
-        context.save();
-        context.translate(x, y);
-        context.rotate(fish.rotation);
-        context.globalAlpha = fish.opacity;
-        context.fillStyle = "rgb(186, 230, 253)";
-
-        // Body
-        context.beginPath();
-        context.ellipse(
-          fishWidth * 0.1,
-          0,
-          fishWidth * 0.36,
-          fishHeight * 0.48,
-          0,
-          0,
-          Math.PI * 2
-        );
-        context.fill();
-
-        // Tail
-        context.beginPath();
-        context.moveTo(-fishWidth * 0.22, 0);
-        context.lineTo(-fishWidth * 0.5, -fishHeight * 0.48);
-        context.lineTo(-fishWidth * 0.5, fishHeight * 0.48);
-        context.closePath();
-        context.fill();
-
-        context.restore();
-      }
-
-      const fade = context.createLinearGradient(
-        0,
-        height - 64,
-        0,
-        height
-      );
-      fade.addColorStop(0, "rgba(0, 0, 0, 0)");
-      fade.addColorStop(1, "rgba(0, 0, 0, 0.7)");
-      context.globalAlpha = 1;
-      context.fillStyle = fade;
-      context.fillRect(0, height - 64, width, 64);
-    });
-
-    return () => {
-      if (frameRef.current !== null) {
-        cancelAnimationFrame(frameRef.current);
-      }
-    };
-  }, [school, visibleAnnotations]);
-
   return (
-    <div
-      ref={containerRef}
-      className="relative h-72 overflow-hidden md:h-96"
+    <svg
+      viewBox="0 0 30 16"
+      aria-hidden="true"
+      className="absolute text-sky-200 transition-all duration-300"
+      style={{
+        left: `${x}%`,
+        top: `${y}%`,
+        width: `${size * 1.8}px`,
+        height: `${size}px`,
+        opacity,
+        transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+        animation: `annotationFishAppear 320ms ease-out ${delay}ms both`,
+      }}
     >
-      <canvas
-        ref={canvasRef}
-        aria-label={`${formatNumber(
-          visibleAnnotations
-        )} fish annotations displayed`}
-        role="img"
-        className="absolute inset-0 block"
-      />
+      <ellipse cx="17" cy="8" rx="9" ry="5" fill="currentColor" />
+      <path d="M8 8 1 2v12Z" fill="currentColor" />
+      <circle cx="21" cy="7" r="1" fill="#020617" />
+    </svg>
+  );
+}
+
+function DataCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-neutral-800 bg-neutral-950 px-4 py-3">
+      <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-600">
+        {label}
+      </p>
+      <p className="mt-1 text-lg font-medium text-white">{value}</p>
     </div>
   );
 }
@@ -371,20 +249,12 @@ function DatasetStat({
   border?: boolean;
 }) {
   return (
-    <div
-      className={`p-4 ${
-        border ? "border-l border-neutral-900" : ""
-      }`}
-    >
+    <div className={`p-4 ${border ? "border-l border-neutral-900" : ""}`}>
       <p className="text-xs text-neutral-600">{label}</p>
-
       <p className="mt-1 text-lg font-medium text-white">
         {formatNumber(annotations)}
       </p>
-
-      <p className="mt-1 text-xs text-neutral-600">
-        {frames} source frames
-      </p>
+      <p className="mt-1 text-xs text-neutral-600">{frames} source frames</p>
     </div>
   );
 }
