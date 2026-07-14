@@ -583,7 +583,7 @@ function LandingHero({ onExplore }: { onExplore: () => void }) {
 
   <div className="hidden lg:block">
     <p className="text-xs uppercase tracking-[0.25em] text-white/35">
-    Project by
+    A Next.js app built by
     </p>
     <p className="mt-1 text-sm font-medium text-white/80">
       Roan Bradley
