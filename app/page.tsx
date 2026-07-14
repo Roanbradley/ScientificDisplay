@@ -583,7 +583,7 @@ function LandingHero({ onExplore }: { onExplore: () => void }) {
 
   <div className="hidden lg:block">
     <p className="text-xs uppercase tracking-[0.25em] text-white/35">
-    A Next.js app built by
+    Project by
     </p>
     <p className="mt-1 text-sm font-medium text-white/80">
       Roan Bradley
@@ -634,28 +634,10 @@ function TrackingSection() {
   const [videoError, setVideoError] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
 
-  useEffect(() => {
-    const video = videoRef.current;
-
-    if (!video) return;
-
-    function checkVideoReady() {
-      if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
-        setVideoReady(true);
-        setVideoError(false);
-      }
-    }
-
-    checkVideoReady();
-
-    const timeout = window.setTimeout(() => {
-      checkVideoReady();
-    }, 5000);
-
-    return () => {
-      window.clearTimeout(timeout);
-    };
-  }, []);
+  // The hero and tracking player use the same physical MP4. Giving the
+  // tracking player a distinct URL prevents browsers from sharing a broken
+  // in-progress media-cache entry between the two <video> elements.
+  const trackingVideoSource = `${TRACKING_VIDEO_PATH}?player=tracking-v2`;
 
   function handleVideoReady() {
     setVideoReady(true);
@@ -663,38 +645,28 @@ function TrackingSection() {
   }
 
   function handleVideoError(event: SyntheticEvent<HTMLVideoElement>) {
-    const video = event.currentTarget;
+    const videoElement = event.currentTarget;
 
-    console.error(
-      "Tracking video failed to load:",
-      {
-        error: video.error,
-        networkState: video.networkState,
-        readyState: video.readyState,
-        currentSrc: video.currentSrc,
-      },
-      TRACKING_VIDEO_PATH,
-    );
+    console.error("Tracking video failed to load:", {
+      error: videoElement.error,
+      networkState: videoElement.networkState,
+      readyState: videoElement.readyState,
+      currentSrc: videoElement.currentSrc,
+    });
 
     setVideoReady(false);
     setVideoPlaying(false);
     setVideoError(true);
   }
 
-  async function toggleVideo() {
-    const video = videoRef.current;
+  function retryVideo() {
+    const videoElement = videoRef.current;
 
-    if (!video) return;
+    if (!videoElement) return;
 
-    try {
-      if (video.paused) {
-        await video.play();
-      } else {
-        video.pause();
-      }
-    } catch (error) {
-      console.error("Could not control tracking video:", error);
-    }
+    setVideoError(false);
+    setVideoReady(false);
+    videoElement.load();
   }
 
   return (
@@ -724,12 +696,12 @@ function TrackingSection() {
         </span>
       </div>
 
-      <div className="group relative aspect-video overflow-hidden rounded-2xl border border-white/10 bg-[#080b0a]">
+      <div className="relative aspect-video overflow-hidden rounded-2xl border border-white/10 bg-[#080b0a]">
         {!videoReady && !videoError && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#080b0a]">
+          <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-[#080b0a]/60">
             <div className="flex items-center gap-3 text-sm text-white/40">
               <span className="h-2 w-2 animate-pulse rounded-full bg-white/60" />
-              Loading tracking video
+              Preparing tracking video
             </div>
           </div>
         )}
@@ -742,21 +714,25 @@ function TrackingSection() {
               </p>
 
               <p className="mt-2 max-w-lg text-sm leading-6 text-white/40">
-                Confirm that the file exists at{" "}
-                <code className="rounded bg-white/10 px-1.5 py-0.5 text-white/70">
-                  public/videos/fish_tracking2.mp4
-                </code>
-                . The filename and capitalization must match exactly.
+                The video is available, but this browser could not initialise
+                the embedded player.
               </p>
+
+              <button
+                type="button"
+                onClick={retryVideo}
+                className="mt-4 rounded-full border border-white/15 bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-white/90"
+              >
+                Try again
+              </button>
             </div>
           </div>
         )}
 
         <video
           ref={videoRef}
-          className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-300 ${
-            videoReady ? "opacity-100" : "opacity-0"
-          }`}
+          className="absolute inset-0 h-full w-full object-contain"
+          src={trackingVideoSource}
           controls
           muted
           loop
@@ -765,29 +741,24 @@ function TrackingSection() {
           onLoadedMetadata={handleVideoReady}
           onLoadedData={handleVideoReady}
           onCanPlay={handleVideoReady}
-          onCanPlayThrough={handleVideoReady}
           onPlaying={() => {
             setVideoReady(true);
             setVideoPlaying(true);
           }}
+          onPlay={() => setVideoPlaying(true)}
           onWaiting={() => setVideoPlaying(false)}
+          onStalled={() => setVideoPlaying(false)}
           onPause={() => setVideoPlaying(false)}
           onEnded={() => setVideoPlaying(false)}
           onError={handleVideoError}
         >
-          <source src={TRACKING_VIDEO_PATH} type="video/mp4" />
           Your browser does not support HTML video.
         </video>
 
-        {videoReady && !videoPlaying && (
-          <button
-            type="button"
-            onClick={toggleVideo}
-            aria-label="Play tracking video"
-            className="absolute left-1/2 top-1/2 z-10 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-black/45 text-white shadow-2xl backdrop-blur-md transition hover:scale-105 hover:bg-black/60"
-          >
-            <PlayIcon />
-          </button>
+        {videoReady && videoPlaying && (
+          <div className="pointer-events-none absolute right-3 top-3 z-10 rounded-full border border-white/10 bg-black/35 px-2.5 py-1 text-[10px] uppercase tracking-[0.18em] text-white/55 backdrop-blur-md">
+            Playing
+          </div>
         )}
       </div>
 
