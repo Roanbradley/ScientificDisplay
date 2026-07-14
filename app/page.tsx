@@ -634,6 +634,29 @@ function TrackingSection() {
   const [videoError, setVideoError] = useState(false);
   const [videoPlaying, setVideoPlaying] = useState(false);
 
+  useEffect(() => {
+    const video = videoRef.current;
+
+    if (!video) return;
+
+    function checkVideoReady() {
+      if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
+        setVideoReady(true);
+        setVideoError(false);
+      }
+    }
+
+    checkVideoReady();
+
+    const timeout = window.setTimeout(() => {
+      checkVideoReady();
+    }, 5000);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, []);
+
   function handleVideoReady() {
     setVideoReady(true);
     setVideoError(false);
@@ -644,7 +667,12 @@ function TrackingSection() {
 
     console.error(
       "Tracking video failed to load:",
-      video.error,
+      {
+        error: video.error,
+        networkState: video.networkState,
+        readyState: video.readyState,
+        currentSrc: video.currentSrc,
+      },
       TRACKING_VIDEO_PATH,
     );
 
@@ -726,17 +754,26 @@ function TrackingSection() {
 
         <video
           ref={videoRef}
-          className="absolute inset-0 h-full w-full object-contain"
+          className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-300 ${
+            videoReady ? "opacity-100" : "opacity-0"
+          }`}
           controls
           muted
           loop
           playsInline
-          preload="auto"
+          preload="metadata"
+          onLoadedMetadata={handleVideoReady}
           onLoadedData={handleVideoReady}
           onCanPlay={handleVideoReady}
-          onError={handleVideoError}
-          onPlay={() => setVideoPlaying(true)}
+          onCanPlayThrough={handleVideoReady}
+          onPlaying={() => {
+            setVideoReady(true);
+            setVideoPlaying(true);
+          }}
+          onWaiting={() => setVideoPlaying(false)}
           onPause={() => setVideoPlaying(false)}
+          onEnded={() => setVideoPlaying(false)}
+          onError={handleVideoError}
         >
           <source src={TRACKING_VIDEO_PATH} type="video/mp4" />
           Your browser does not support HTML video.
