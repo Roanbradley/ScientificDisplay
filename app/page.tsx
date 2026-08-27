@@ -14,6 +14,7 @@ import Papa from "papaparse";
 import FishTimeExplorer from "./components/FishTimeExplorer";
 import AnnotationStory from "./components/AnnotationStory";
 import AugmentationExperiment from "./components/AugmentationExperiment";
+import PosterSection from "./components/PosterSection";
 
 import {
   CartesianGrid,
@@ -476,6 +477,8 @@ export default function Home() {
           <div id="explorer" className="scroll-mt-24">
             <FishTimeExplorer />
           </div>
+
+          <PosterSection />
 
           <BrandFooter />
         </div>
