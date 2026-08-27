@@ -13,11 +13,12 @@ import Papa from "papaparse";
 
 import FishTimeExplorer from "./components/FishTimeExplorer";
 import AnnotationStory from "./components/AnnotationStory";
+import AugmentationExperiment from "./components/AugmentationExperiment";
 
 import {
   CartesianGrid,
   Legend,
-  Line,
+  Line, 
   LineChart,
   ReferenceDot,
   ResponsiveContainer,
@@ -470,6 +471,7 @@ export default function Home() {
 
           <AnnotationStory />
           <TrackingSection />
+          <AugmentationExperiment />
 
           <div id="explorer" className="scroll-mt-24">
             <FishTimeExplorer />
